@@ -105,6 +105,7 @@ services:
       - "8084:8080"
     environment:
       - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+      - AWS_SQS_QUEUE_URL=${AWS_SQS_QUEUE_URL}
     depends_on:
       - hapi-fhir
     networks:
