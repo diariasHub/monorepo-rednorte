@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ms-red-centros
+
+server:
+  port: 8080
+
+fhir:
+  server:
+    url: ${FHIR_SERVER_URL:http://localhost:8080/fhir}

@@ -1,0 +1,30 @@
+server:
+  port: 8080 
+
+spring:
+  application:
+    name: ms-rednorte-api-gateway
+
+  cloud:
+    gateway:
+      # Configuración de CORS global para el ecosistema RedNorte
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000" # Permite peticiones directas desde el contenedor Frontend
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            maxAge: 3600
+
+      # Reglas de enrutamiento hacia ms-ficha-clinica
+      routes:
+        - id: ms-ficha-clinica-route
+          uri: http://ms-ficha-clinica:8001 # Se usa el alias del servicio y puerto interno del contenedor
+          predicates:
+            - Path=/api/v1/history/**, /api/v1/encounters/**, /api/v1/conditions/**, /api/v1/observations/**, /api/v1/procedures/**, /api/v1/clinical-notes/**

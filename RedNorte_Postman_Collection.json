@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "RedNorte FHIR Microservices API",
+    "description": "Colección completa para probar los endpoints de todos los microservicios, incluyendo un flujo de uso clínico completo.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Casos de Uso: Flujo de Urgencias",
+      "item": [
+        {
+          "name": "1. Recepción (Ingreso)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rut\": \"12345678-9\",\n    \"nombre\": \"Juan Pérez\",\n    \"motivo\": \"Fuerte dolor abdominal\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8084/urgencias/ingreso",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8084",
+              "path": ["urgencias", "ingreso"]
+            }
+          }
+        },
+        {
+          "name": "2. Enfermería (Triage)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"categorizacion\": \"C3\",\n    \"presion_arterial\": \"120/80\",\n    \"temperatura\": \"38.5\",\n    \"frecuencia_cardiaca\": \"95\",\n    \"saturacion_oxigeno\": \"98\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8084/urgencias/triage/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8084",
+              "path": ["urgencias", "triage", "1"]
+            }
+          }
+        },
+        {
+          "name": "3. Box Médico (Ver Historial Clínico)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/clinical-history/patient/12345678-9",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "clinical-history", "patient", "12345678-9"]
+            }
+          }
+        },
+        {
+          "name": "4. Box Médico (Agregar Diagnóstico/Condición)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"patientId\": \"12345678-9\",\n    \"code\": \"R10.4\",\n    \"description\": \"Dolor abdominal no especificado\",\n    \"clinicalStatus\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/conditions",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "conditions"]
+            }
+          }
+        },
+        {
+          "name": "5. Salida (Alta Médica)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"diagnostico\": \"Gastroenteritis aguda, derivado a domicilio con tratamiento\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8084/urgencias/alta/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8084",
+              "path": ["urgencias", "alta", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agenda Profesional",
+      "item": [
+        {
+          "name": "Crear Appointment con Nombre",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"patientId\": \"12345678-9\",\n    \"patientName\": \"Juan Pérez\",\n    \"practitionerId\": \"9876543-2\",\n    \"status\": \"booked\",\n    \"description\": \"Consulta general\",\n    \"start\": \"2024-05-20T10:00:00Z\",\n    \"end\": \"2024-05-20T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8082/api/appointments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["api", "appointments"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

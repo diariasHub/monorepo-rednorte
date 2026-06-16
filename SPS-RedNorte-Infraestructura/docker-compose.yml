@@ -1,0 +1,147 @@
+services:
+  # -----------------------------------------------------------
+  # 1. BASE DE DATOS CENTRAL COMPARTIDA (PostgreSQL)
+  # -----------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: rednorte-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rednorte-network
+
+  # -----------------------------------------------------------
+  # 2. CAPA CENTRAL DEL MODELO CLÍNICO (HAPI FHIR Server)
+  # -----------------------------------------------------------
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    container_name: rednorte-hapi-fhir
+    restart: on-failure
+    ports:
+      - "8085:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - HAPI_FHIR_TESTER_HOME_SERVER_ADDRESS=http://localhost:8080/fhir
+    depends_on:
+      - postgres
+    networks:
+      - rednorte-network
+
+  # -----------------------------------------------------------
+  # 3.MICROSERVICIOS
+  # -----------------------------------------------------------
+  ms-red-centros:
+    build: ../SPS-ms-red-centros
+    image: rednorte-ms-centros:local
+    container_name: rednorte-ms-centros
+    ports:
+      - "8081:8080"
+    environment:
+      - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+    depends_on:
+      - hapi-fhir
+    networks:
+      - rednorte-network
+  ms-agenda:
+    build: ../SPS-ms-agenda-profesional
+    image: ms-agenda-profesional:local
+    container_name: ms-agenda-profesional
+    ports:
+      - "8082:8080"
+    environment:
+      - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+    depends_on:
+      - hapi-fhir
+    networks:
+      - rednorte-network
+  ms-ficha-clinica:
+    build: ../SPS-ms-ficha-clinica
+    image: ms-ficha-clinica:local
+    container_name: ms-ficha-clinica
+    ports:
+      - "8083:8001"
+    environment:
+      - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - SPRING_DATASOURCE_DRIVERCLASSNAME=org.postgresql.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - hapi-fhir
+      - postgres
+    networks:
+      - rednorte-network
+  ms-usuarios-identidad:
+    restart: always
+    build: ../SPS-ms-usuarios-identidad/ms-usuarios
+    image: ms-usuarios-identidad:local
+    container_name: ms-usuarios-identidad
+    ports:
+      - "8086:8080"
+    environment:
+      - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+    depends_on:
+      - hapi-fhir
+    networks:
+      - rednorte-network
+
+  ms-urgencias-flujo:
+    restart: always
+    build: ../ms-urgencias-flujo
+    image: ms-urgencias-flujo:local
+    container_name: ms-urgencias-flujo
+    ports:
+      - "8084:8080"
+    environment:
+      - FHIR_SERVER_URL=http://hapi-fhir:8080/fhir
+    depends_on:
+      - hapi-fhir
+    networks:
+      - rednorte-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  ms-api-gateway:
+    restart: always
+    build: ../SPS-rednorte-api-gateway
+    image: ms-api-gateway:local
+    container_name: ms-api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hapi-fhir
+      - ms-agenda
+      - ms-ficha-clinica
+      - ms-red-centros
+      - ms-urgencias-flujo
+    networks:
+      - rednorte-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+
+# -----------------------------------------------------------
+# VOLÚMENES Y REDES
+# -----------------------------------------------------------
+volumes:
+  postgres_data:
+
+
+networks:
+  rednorte-network:
+    driver: overlay
