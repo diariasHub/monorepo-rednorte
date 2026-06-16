@@ -29,7 +29,7 @@ public class GatewayConfig {
                                                 .build())
                                 .and(route("ruta-urgencias")
                                                 .route(path("/urgencias/**"), http())
-                                                .before(uri("http://ms-urgencias-flujo:8084"))
+                                                .before(uri("http://ms-urgencias-flujo:8080"))
                                                 .build())
                                 .and(route("ruta-identidad-usuarios")
                                                 .route(path("/api/v2/**")
